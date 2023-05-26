@@ -61,11 +61,16 @@ public class Drivetrain {
             rrspeed/=max;
         }
 
-        frontLeft.setPower(flspeed);
-        frontRight.setPower(frspeed);
-        rearLeft.setPower(rlspeed);
-        rearRight.setPower(rrspeed);
+        if (gamepad.left_trigger > 0.0)
+            brake = 0.3;
+        else if (gamepad.right_trigger > 0.0)
+            brake = 0.6;
+        else brake = 1.0;
 
+        frontLeft.setPower(flspeed * brake);
+        frontRight.setPower(frspeed * brake);
+        rearLeft.setPower(rlspeed * brake);
+        rearRight.setPower(rrspeed * brake);
     }
 
 }

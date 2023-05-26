@@ -55,6 +55,12 @@ public class Lift {
         HIGH,
     }
 
+    ArmStates armState = ArmStates.COLLECT;
+    GuideStates guideState = GuideStates.DOWN;
+    ClawStates clawState = ClawStates.CLOSED;
+    UprightStickStates uprightStickState = UprightStickStates.UP;
+    LiftStates liftState = LiftStates.COLLECT;
+
     public Lift(){
     }
 
@@ -97,71 +103,108 @@ public class Lift {
             case COLLECT:
                 armLeft.setPosition(Constants.leftArmCollect);
                 armRight.setPosition(Constants.rightArmCollect);
+                armState = ArmStates.COLLECT;
                 break;
             case SCORE:
                 armLeft.setPosition(Constants.leftArmScore);
                 armRight.setPosition(Constants.rightArmScore);
+                armState = ArmStates.SCORE;
                 break;
             default:
                 break;
         }
+    }
+
+    public void toggleArmState(){
+        if (armState == ArmStates.COLLECT)
+            changeArmState(ArmStates.SCORE);
+        else changeArmState(ArmStates.COLLECT);
     }
 
     public void changeGuideState(GuideStates state){
         switch (state) {
             case UP:
                 poleGuide.setPosition(Constants.guideUp);
+                guideState = GuideStates.UP;
                 break;
             case DOWN:
                 poleGuide.setPosition(Constants.guideDown);
+                guideState = GuideStates.DOWN;
                 break;
             default:
                 break;
         }
+    }
+
+    public void toggleGuideState(){
+        if (guideState == GuideStates.UP)
+            changeGuideState(GuideStates.DOWN);
+        else changeGuideState(GuideStates.UP);
     }
 
     public void changeClawState(ClawStates state){
         switch (state) {
             case OPEN:
                 claw.setPosition(Constants.openClaw);
+                clawState = ClawStates.OPEN;
                 break;
             case CLOSED:
                 claw.setPosition(Constants.closedClaw);
+                clawState = ClawStates.CLOSED;
                 break;
             default:
                 break;
         }
+    }
+
+    public void toggleClawState(){
+        if (clawState == ClawStates.OPEN)
+            changeClawState(ClawStates.CLOSED);
+        else changeClawState(ClawStates.OPEN);
     }
 
     public void changeUprightStickState(UprightStickStates state){
         switch (state) {
             case UP:
                 uprightStick.setPosition(Constants.uprightStickUp);
+                uprightStickState = UprightStickStates.UP;
                 break;
             case DOWN:
                 uprightStick.setPosition(Constants.uprightStickDown);
+                uprightStickState = UprightStickStates.DOWN;
                 break;
             default:
                 break;
         }
     }
 
+    public void toggleUprightStickState(){
+        if (uprightStickState == UprightStickStates.UP)
+            changeUprightStickState(UprightStickStates.DOWN);
+        else changeUprightStickState(UprightStickStates.UP);
+    }
+
     public void changeLiftState(LiftStates state){
         switch (state) {
             case COLLECT:
                 //lift pid controller
+                liftState = LiftStates.COLLECT;
                 break;
             case GROUND:
                 //lift pid controller
+                liftState = LiftStates.GROUND;
                 break;
             case LOW:
                 //lift pid controller
+                liftState = LiftStates.LOW;
                 break;
             case MID:
                 //lift pid controller
+                liftState = LiftStates.MID;
                 break;
             case HIGH:
                 //lift pid controller
+                liftState = LiftStates.HIGH;
                 break;
             default:
                 break;
@@ -178,6 +221,12 @@ public class Lift {
         guideReading.red = guideSensor.red();
         guideReading.green = guideSensor.green();
         guideReading.blue = guideSensor.blue();
+    }
+
+    public boolean checkForCone(SensorReading clawReading){
+        if (clawReading.distance < 3.0 && (Math.max(clawReading.red, Math.max(clawReading.green, clawReading.blue)) == clawReading.red || Math.max(clawReading.red, Math.max(clawReading.green, clawReading.blue)) == clawReading.blue) && clawState == ClawStates.OPEN)
+            return true;
+        else return false;
     }
 
 }
