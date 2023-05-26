@@ -86,7 +86,11 @@ public class Lift {
         poleGuide = hwMap.get(Servo.class, "poleGuide");
         uprightStick = hwMap.get(Servo.class, "uprightStick");
 
-        /**initPositions*/
+        armLeft.setPosition(Constants.leftArmCollect);
+        armRight.setPosition(Constants.rightArmCollect);
+        claw.setPosition(Constants.closedClaw);
+        poleGuide.setPosition(Constants.guideDown);
+        uprightStick.setPosition(Constants.uprightStickUp);
 
         //Sensors
         clawSensor = hwMap.get(RevColorSensorV3.class, "clawSensor");
@@ -229,4 +233,9 @@ public class Lift {
         else return false;
     }
 
+    public boolean checkForPole(SensorReading guideReading){
+        if (guideReading.distance < 3.0 && clawState == ClawStates.CLOSED && guideState == GuideStates.UP /*&& yellow detection*/)
+            return true;
+        else return false;
+    }
 }

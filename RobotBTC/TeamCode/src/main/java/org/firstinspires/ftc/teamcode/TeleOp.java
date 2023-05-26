@@ -94,10 +94,13 @@ public class TeleOp extends LinearOpMode {
             if (gamepad2.x)
                 lift.toggleGuideState();
 
-            if (lift.checkForCone(clawReadings) && lift.liftState == Lift.LiftStates.COLLECT && lift.clawState == Lift.ClawStates.OPEN) {
+            if (lift.checkForCone(clawReadings) && lift.liftState == Lift.LiftStates.COLLECT) {
                 lift.changeClawState(Lift.ClawStates.CLOSED);
                 lift.changeLiftState(Lift.LiftStates.GROUND);
             }
+
+            if (lift.checkForPole(guideReadings) && lift.liftState != Lift.LiftStates.COLLECT && lift.liftState != Lift.LiftStates.GROUND);
+                //lower lift
 
             sleep(10);
         }
