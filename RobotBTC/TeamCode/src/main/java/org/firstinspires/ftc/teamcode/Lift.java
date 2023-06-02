@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Constants;
@@ -49,12 +50,30 @@ public class Lift {
     }
 
     public enum LiftStates{
-        COLLECT,
-        GROUND,
-        LOW,
-        MID,
-        HIGH,
+        COLLECT (Constants.liftCollect),
+        GROUND (Constants.liftGroundJunction),
+        LOW (Constants.liftLowJunction),
+        SCORE_LOW (Constants.liftScoreLowJunction),
+        MID (Constants.liftMidJunction),
+        SCORE_MID (Constants.liftScoreMidJunction),
+        HIGH (Constants.liftHighJunction),
+        SCORE_HIGH (Constants.liftScoreHighJunction);
+
+        private int liftPos;
+
+        LiftStates(int liftPos) {
+            this.liftPos = liftPos;
+        }
+
+        public int get(){
+            return liftPos;
+        }
     }
+
+    public int lastError = 0, currError = 0, errorSum = 0;
+    public double kP = 0.0, kI = 0.0, kD = 0.0;
+    public int liftDirectionCoeff = 1;
+    public int errorCount = 0;
 
     ArmStates armState = ArmStates.COLLECT;
     GuideStates guideState = GuideStates.DOWN;
@@ -195,29 +214,83 @@ public class Lift {
     public void changeLiftState(LiftStates state){
         switch (state) {
             case COLLECT:
-                //lift pid controller
                 liftState = LiftStates.COLLECT;
+                errorCount = 0;
+                errorSum = 0;
                 break;
             case GROUND:
-                //lift pid controller
                 liftState = LiftStates.GROUND;
+                errorCount = 0;
+                errorSum = 0;
                 break;
             case LOW:
-                //lift pid controller
                 liftState = LiftStates.LOW;
+                errorCount = 0;
+                errorSum = 0;
+                break;
+            case SCORE_LOW:
+                liftState = LiftStates.SCORE_LOW;
+                errorCount = 0;
+                errorSum = 0;
                 break;
             case MID:
-                //lift pid controller
                 liftState = LiftStates.MID;
+                errorCount = 0;
+                errorSum = 0;
+                break;
+            case SCORE_MID:
+                liftState = LiftStates.SCORE_MID;
+                errorCount = 0;
+                errorSum = 0;
                 break;
             case HIGH:
-                //lift pid controller
                 liftState = LiftStates.HIGH;
+                errorCount = 0;
+                errorSum = 0;
+                break;
+            case SCORE_HIGH:
+                liftState = LiftStates.SCORE_HIGH;
+                errorCount = 0;
+                errorSum = 50;
                 break;
             default:
                 break;
         }
     }
+
+    public void PIDController(){
+        if (liftState!=LiftStates.COLLECT) {
+            errorCount += 1;
+            if (liftState.get() < liftLeft.getCurrentPosition())
+                liftDirectionCoeff = -1;
+            else liftDirectionCoeff = 1;
+            currError = Math.abs(liftState.get() - liftLeft.getCurrentPosition());
+            errorSum += currError;
+            double liftPower = (double) (kP * currError + kD * (currError - lastError) + kI * errorSum / errorCount);
+            liftPower = Range.clip(liftPower, 0.0, 1.0);
+            liftLeft.setPower(liftPower);
+            liftRight.setPower(liftPower);
+        }
+    }
+    
+    public void swapToScore(){
+        if (liftState == LiftStates.LOW)
+            changeLiftState(LiftStates.SCORE_LOW);
+        else if (liftState == LiftStates.MID)
+            changeLiftState(LiftStates.SCORE_MID);
+        else if (liftState == LiftStates.HIGH)
+            changeLiftState(LiftStates.SCORE_HIGH);
+    }
+    
+    public void swapFromScore(){
+        if (liftState == LiftStates.SCORE_LOW)
+            changeLiftState(LiftStates.LOW);
+        else if (liftState == LiftStates.SCORE_MID)
+            changeLiftState(LiftStates.MID);
+        else if (liftState == LiftStates.SCORE_HIGH)
+            changeLiftState(LiftStates.HIGH);
+    }
+
 
     public void readSensors(SensorReading clawReading, SensorReading guideReading){
         clawReading.distance = clawSensor.getDistance(DistanceUnit.CM);
@@ -238,7 +311,7 @@ public class Lift {
     }
 
     public boolean checkForPole(SensorReading guideReading){
-        if (guideReading.distance < 3.0 && clawState == ClawStates.CLOSED && guideState == GuideStates.UP /*&& yellow detection*/)
+        if (guideReading.distance < 3.0 && clawState == ClawStates.CLOSED && guideState == GuideStates.UP /*&& yellow pole detection*/)
             return true;
         else return false;
     }

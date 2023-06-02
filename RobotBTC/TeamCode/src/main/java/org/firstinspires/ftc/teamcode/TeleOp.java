@@ -56,8 +56,10 @@ public class TeleOp extends LinearOpMode {
             dt.initDrivetrain(hardwareMap);
             lift.initLift(hardwareMap);
 
-            if (sensorReadTime.seconds() > 0.1)
+            if (sensorReadTime.milliseconds() > 75) {
                 lift.readSensors(clawReadings, guideReadings);
+                sensorReadTime.reset();
+            }
 
             dt.mecanumDrive(gamepad1);
 
@@ -85,6 +87,8 @@ public class TeleOp extends LinearOpMode {
                 lift.changeArmState(Lift.ArmStates.COLLECT);
             }
 
+            lift.PIDController();
+
             if (gamepad2.a)
                 lift.toggleClawState();
 
@@ -99,8 +103,9 @@ public class TeleOp extends LinearOpMode {
                 lift.changeLiftState(Lift.LiftStates.GROUND);
             }
 
-            if (lift.checkForPole(guideReadings) && lift.liftState != Lift.LiftStates.COLLECT && lift.liftState != Lift.LiftStates.GROUND);
-                //lower lift
+            if (lift.checkForPole(guideReadings) && lift.liftState != Lift.LiftStates.COLLECT && lift.liftState != Lift.LiftStates.GROUND)
+                lift.swapToScore();
+            else lift.swapFromScore();
 
             sleep(10);
         }

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -12,6 +13,7 @@ public class Drivetrain {
     public DcMotorEx frontRight;
     public DcMotorEx rearLeft;
     public DcMotorEx rearRight;
+    public BNO055IMU imu;
 
     public Drivetrain(){
     }
@@ -37,6 +39,8 @@ public class Drivetrain {
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         rearLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         rearRight.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        imu = hwMap.get(BNO055IMU.class, "imu");
 
     }
 
