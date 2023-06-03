@@ -41,6 +41,7 @@ public class TeleOp extends LinearOpMode {
     Lift lift = new Lift();
     ElapsedTime sensorReadTime =  new ElapsedTime();
     ElapsedTime liftReadTime =  new ElapsedTime();
+    ElapsedTime switchReadTime =  new ElapsedTime();
     ElapsedTime grabbedTime = new ElapsedTime();
 
     @Override
@@ -49,7 +50,7 @@ public class TeleOp extends LinearOpMode {
         waitForStart();
         sensorReadTime.reset();
         liftReadTime.reset();
-
+        switchReadTime.reset();
         while (opModeIsActive()) {
             dt.initDrivetrain(hardwareMap);
             lift.initLift(hardwareMap);
@@ -63,6 +64,11 @@ public class TeleOp extends LinearOpMode {
             if (liftReadTime.milliseconds() > 25){
                 lift.readLiftEncoders();
                 liftReadTime.reset();
+            }
+
+            if (switchReadTime.milliseconds() > 75) {
+                lift.readSwitches();
+                switchReadTime.reset();
             }
 
             /**Driving*/

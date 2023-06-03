@@ -6,6 +6,7 @@ public class LimitSwitch {
 
     public DigitalChannel digitalSwitch;
     public String switchName;
+    public boolean switchState;
 
     public LimitSwitch(DigitalChannel limitSwitch, String name){
         this.digitalSwitch = limitSwitch;
@@ -13,7 +14,7 @@ public class LimitSwitch {
     }
 
     public boolean isPressed(){
-        if (digitalSwitch.getState())
+        if (switchState)
             return true;
         else return false;
     }

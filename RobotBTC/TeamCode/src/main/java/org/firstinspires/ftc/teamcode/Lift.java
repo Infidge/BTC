@@ -271,14 +271,14 @@ public class Lift {
     public void PIDController(){
         double liftPower = 0.0;
         if (liftState!=LiftStates.COLLECT){
-            errorCount += 1;
             if (liftState.get() < leftLiftPos)
                 liftDirectionCoeff = -1;
             else liftDirectionCoeff = 1;
+            errorCount += 1;
             currError = Math.abs(liftState.get() - leftLiftPos);
             errorSum += currError;
-            liftPower = kP * currError + kD * (currError - lastError) + kI * errorSum / errorCount;
-            liftPower = Range.clip(liftPower, 0.0, 1.0);
+            liftPower = liftDirectionCoeff * (kP * currError + kD * (currError - lastError) + kI * errorSum / errorCount);
+            liftPower = Range.clip(liftPower, -1.0, 1.0);
         }
         else if (!leftSwitch.isPressed() || !rightSwitch.isPressed()){
             liftPower = -Constants.liftDefaultPower;
@@ -328,6 +328,11 @@ public class Lift {
     public void readLiftEncoders(){
         leftLiftPos = liftLeft.getCurrentPosition();
         rightLiftPos = liftRight.getCurrentPosition();
+    }
+
+    public void readSwitches(){
+        leftSwitch.switchState = switchL.getState();
+        rightSwitch.switchState = switchR.getState();
     }
 
     public boolean checkForCone(){
