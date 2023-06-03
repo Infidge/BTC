@@ -29,43 +29,50 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.teamcode.Util.SensorReading;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="Robot: Teleop POV", group="Robot")
 public class TeleOp extends LinearOpMode {
 
     Drivetrain dt = new Drivetrain();
     Lift lift = new Lift();
-    SensorReading clawReadings = new SensorReading();
-    SensorReading guideReadings = new SensorReading();
     ElapsedTime sensorReadTime =  new ElapsedTime();
+    ElapsedTime liftReadTime =  new ElapsedTime();
+    ElapsedTime grabbedTime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
 
         waitForStart();
         sensorReadTime.reset();
+        liftReadTime.reset();
 
         while (opModeIsActive()) {
-
             dt.initDrivetrain(hardwareMap);
             lift.initLift(hardwareMap);
 
+            /**Bulk Readings*/
             if (sensorReadTime.milliseconds() > 75) {
-                lift.readSensors(clawReadings, guideReadings);
+                lift.readSensors();
                 sensorReadTime.reset();
             }
 
+            if (liftReadTime.milliseconds() > 25){
+                lift.readLiftEncoders();
+                liftReadTime.reset();
+            }
+
+            /**Driving*/
             dt.mecanumDrive(gamepad1);
 
+            /**Righting Stick*/
             if (gamepad1.a)
                 lift.toggleUprightStickState();
 
+            /**Lift and arm states*/
             if (gamepad2.dpad_up){
                 lift.changeLiftState(Lift.LiftStates.HIGH);
                 lift.changeGuideState(Lift.GuideStates.UP);
@@ -87,8 +94,10 @@ public class TeleOp extends LinearOpMode {
                 lift.changeArmState(Lift.ArmStates.COLLECT);
             }
 
+            /**Lift PID Controller*/
             lift.PIDController();
 
+            /**Manual Toggles*/
             if (gamepad2.a)
                 lift.toggleClawState();
 
@@ -98,12 +107,18 @@ public class TeleOp extends LinearOpMode {
             if (gamepad2.x)
                 lift.toggleGuideState();
 
-            if (lift.checkForCone(clawReadings) && lift.liftState == Lift.LiftStates.COLLECT) {
+            /**Auto-Grab*/
+            if (lift.checkForCone()) {
                 lift.changeClawState(Lift.ClawStates.CLOSED);
+                grabbedTime.reset();
+            }
+
+            if (lift.clawState == Lift.ClawStates.CLOSED && grabbedTime.seconds() > 0.3 && lift.liftState == Lift.LiftStates.COLLECT){
                 lift.changeLiftState(Lift.LiftStates.GROUND);
             }
 
-            if (lift.checkForPole(guideReadings) && lift.liftState != Lift.LiftStates.COLLECT && lift.liftState != Lift.LiftStates.GROUND)
+            /**Pole Detection*/
+            if (lift.checkForPole())
                 lift.swapToScore();
             else lift.swapFromScore();
 

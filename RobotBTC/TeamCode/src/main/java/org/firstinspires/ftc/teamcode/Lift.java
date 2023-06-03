@@ -10,7 +10,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.Constants;
+import org.firstinspires.ftc.teamcode.Util.Constants;
+import org.firstinspires.ftc.teamcode.Util.LimitSwitch;
+import org.firstinspires.ftc.teamcode.Util.SensorReading;
 
 public class Lift {
 
@@ -26,8 +28,14 @@ public class Lift {
     RevColorSensorV3 clawSensor;
     RevColorSensorV3 guideSensor;
 
-    DigitalChannel leftSwitch;
-    DigitalChannel rightSwitch;
+    DigitalChannel switchL;
+    DigitalChannel switchR;
+
+    LimitSwitch leftSwitch = new LimitSwitch(switchL, "leftSwitch");
+    LimitSwitch rightSwitch = new LimitSwitch(switchR, "rightSwitch");
+
+    SensorReading clawReadings = new SensorReading();
+    SensorReading guideReadings = new SensorReading();
 
     public enum ArmStates{
         COLLECT,
@@ -75,6 +83,8 @@ public class Lift {
     public int liftDirectionCoeff = 1;
     public int errorCount = 0;
 
+    public int leftLiftPos, rightLiftPos;
+
     ArmStates armState = ArmStates.COLLECT;
     GuideStates guideState = GuideStates.DOWN;
     ClawStates clawState = ClawStates.CLOSED;
@@ -120,8 +130,8 @@ public class Lift {
         guideSensor = hwMap.get(RevColorSensorV3.class, "guideSensor");
 
         //LimitSwitches
-        leftSwitch = hwMap.get(DigitalChannel.class, "leftSwitch");
-        rightSwitch = hwMap.get(DigitalChannel.class, "rightSwitch");
+        leftSwitch.digitalSwitch = hwMap.get(DigitalChannel.class, leftSwitch.switchName);
+        rightSwitch.digitalSwitch = hwMap.get(DigitalChannel.class, rightSwitch.switchName);
     }
 
 
@@ -259,18 +269,29 @@ public class Lift {
     }
 
     public void PIDController(){
-        if (liftState!=LiftStates.COLLECT) {
+        double liftPower = 0.0;
+        if (liftState!=LiftStates.COLLECT){
             errorCount += 1;
-            if (liftState.get() < liftLeft.getCurrentPosition())
+            if (liftState.get() < leftLiftPos)
                 liftDirectionCoeff = -1;
             else liftDirectionCoeff = 1;
-            currError = Math.abs(liftState.get() - liftLeft.getCurrentPosition());
+            currError = Math.abs(liftState.get() - leftLiftPos);
             errorSum += currError;
-            double liftPower = (double) (kP * currError + kD * (currError - lastError) + kI * errorSum / errorCount);
+            liftPower = kP * currError + kD * (currError - lastError) + kI * errorSum / errorCount;
             liftPower = Range.clip(liftPower, 0.0, 1.0);
-            liftLeft.setPower(liftPower);
-            liftRight.setPower(liftPower);
         }
+        else if (!leftSwitch.isPressed() || !rightSwitch.isPressed()){
+            liftPower = -Constants.liftDefaultPower;
+        }
+        else if (leftSwitch.isPressed() || rightSwitch.isPressed()){
+            liftPower = 0.0;
+            liftLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+        liftLeft.setPower(liftPower);
+        liftRight.setPower(liftPower);
     }
     
     public void swapToScore(){
@@ -292,26 +313,31 @@ public class Lift {
     }
 
 
-    public void readSensors(SensorReading clawReading, SensorReading guideReading){
-        clawReading.distance = clawSensor.getDistance(DistanceUnit.CM);
-        clawReading.red = clawSensor.red();
-        clawReading.green = clawSensor.green();
-        clawReading.blue = clawSensor.blue();
+    public void readSensors(){
+        clawReadings.distance = clawSensor.getDistance(DistanceUnit.CM);
+        clawReadings.red = clawSensor.red();
+        clawReadings.green = clawSensor.green();
+        clawReadings.blue = clawSensor.blue();
 
-        guideReading.distance = guideSensor.getDistance(DistanceUnit.CM);
-        guideReading.red = guideSensor.red();
-        guideReading.green = guideSensor.green();
-        guideReading.blue = guideSensor.blue();
+        guideReadings.distance = guideSensor.getDistance(DistanceUnit.CM);
+        guideReadings.red = guideSensor.red();
+        guideReadings.green = guideSensor.green();
+        guideReadings.blue = guideSensor.blue();
     }
 
-    public boolean checkForCone(SensorReading clawReading){
-        if (clawReading.distance < 3.0 && (Math.max(clawReading.red, Math.max(clawReading.green, clawReading.blue)) == clawReading.red || Math.max(clawReading.red, Math.max(clawReading.green, clawReading.blue)) == clawReading.blue) && clawState == ClawStates.OPEN)
+    public void readLiftEncoders(){
+        leftLiftPos = liftLeft.getCurrentPosition();
+        rightLiftPos = liftRight.getCurrentPosition();
+    }
+
+    public boolean checkForCone(){
+        if (clawReadings.distance < 3.0 && (Math.max(clawReadings.red, Math.max(clawReadings.green, clawReadings.blue)) == clawReadings.red || Math.max(clawReadings.red, Math.max(clawReadings.green, clawReadings.blue)) == clawReadings.blue) && clawState == ClawStates.OPEN  && liftState == Lift.LiftStates.COLLECT)
             return true;
         else return false;
     }
 
-    public boolean checkForPole(SensorReading guideReading){
-        if (guideReading.distance < 3.0 && clawState == ClawStates.CLOSED && guideState == GuideStates.UP /*&& yellow pole detection*/)
+    public boolean checkForPole(){
+        if (guideReadings.distance < 3.0 /*&& yellow pole detection*/ && clawState == ClawStates.CLOSED && guideState == GuideStates.UP && liftState != Lift.LiftStates.COLLECT && liftState != Lift.LiftStates.GROUND)
             return true;
         else return false;
     }
