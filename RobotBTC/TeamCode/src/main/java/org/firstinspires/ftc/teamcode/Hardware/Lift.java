@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Hardware;
 
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -87,9 +87,9 @@ public class Lift {
 
     ArmStates armState = ArmStates.COLLECT;
     GuideStates guideState = GuideStates.DOWN;
-    ClawStates clawState = ClawStates.CLOSED;
+    public ClawStates clawState = ClawStates.CLOSED;
     UprightStickStates uprightStickState = UprightStickStates.UP;
-    LiftStates liftState = LiftStates.COLLECT;
+    public LiftStates liftState = LiftStates.COLLECT;
 
     public Lift(){
     }
