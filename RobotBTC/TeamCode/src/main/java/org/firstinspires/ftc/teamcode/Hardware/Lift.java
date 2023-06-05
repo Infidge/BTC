@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -222,50 +223,8 @@ public class Lift {
     }
 
     public void changeLiftState(LiftStates state){
-        switch (state) {
-            case COLLECT:
-                liftState = LiftStates.COLLECT;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case GROUND:
-                liftState = LiftStates.GROUND;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case LOW:
-                liftState = LiftStates.LOW;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case SCORE_LOW:
-                liftState = LiftStates.SCORE_LOW;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case MID:
-                liftState = LiftStates.MID;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case SCORE_MID:
-                liftState = LiftStates.SCORE_MID;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case HIGH:
-                liftState = LiftStates.HIGH;
-                errorCount = 0;
-                errorSum = 0;
-                break;
-            case SCORE_HIGH:
-                liftState = LiftStates.SCORE_HIGH;
-                errorCount = 0;
-                errorSum = 50;
-                break;
-            default:
-                break;
-        }
+        liftState = state;
+        resetPIDError();
     }
 
     public void PIDController(){
@@ -292,6 +251,40 @@ public class Lift {
         }
         liftLeft.setPower(liftPower);
         liftRight.setPower(liftPower);
+    }
+
+    public void PIDControllerTuning(PIDCoefficients pid, int targetPosition) {
+        double liftPower = 0.0;
+        if (targetPosition != 0) {
+            if (targetPosition < leftLiftPos) {
+                liftDirectionCoeff = -1;
+            } else {
+                liftDirectionCoeff = 1;
+            }
+
+            errorCount += 1;
+            currError = Math.abs(targetPosition - leftLiftPos);
+            errorSum += currError;
+
+            liftPower = liftDirectionCoeff * (pid.p * currError + pid.d * (currError - lastError) + pid.i * errorSum / errorCount);
+            liftPower = Range.clip(liftPower, -1.0, 1.0);
+        } else if (!leftSwitch.isPressed() || !rightSwitch.isPressed()){
+            liftPower = -Constants.liftDefaultPower;
+        } else if (leftSwitch.isPressed() || rightSwitch.isPressed()){
+            liftPower = 0.0;
+            liftLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+
+        liftLeft.setPower(liftPower);
+        liftRight.setPower(liftPower);
+    }
+
+    public void resetPIDError() {
+        errorCount = 0;
+        errorSum = 0;
     }
     
     public void swapToScore(){
