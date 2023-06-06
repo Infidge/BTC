@@ -77,4 +77,11 @@ public class Drivetrain {
         rearRight.setPower(rrspeed * brake);
     }
 
+    public void stopDrivetrain(){
+        frontLeft.setPower(0.0);
+        rearLeft.setPower(0.0);
+        frontRight.setPower(0.0);
+        rearRight.setPower(0.0);
+    }
+
 }

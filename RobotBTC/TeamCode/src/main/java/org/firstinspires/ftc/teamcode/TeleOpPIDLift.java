@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.Hardware.Drivetrain;
 import org.firstinspires.ftc.teamcode.Hardware.Lift;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name="TeleOpPIDLift", group="Robot")
-// @Config
+//@Config
 public class TeleOpPIDLift extends LinearOpMode {
 
     Drivetrain dt = new Drivetrain();

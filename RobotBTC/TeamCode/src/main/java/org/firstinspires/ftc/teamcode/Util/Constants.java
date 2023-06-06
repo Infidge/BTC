@@ -11,6 +11,13 @@ public class Constants {
     public static final int liftHighJunction = 0;
     public static final int liftScoreHighJunction = 0;
 
+    public static final int liftCone1 = 0;
+    public static final int liftCone2 = 0;
+    public static final int liftCone3 = 0;
+    public static final int liftCone4 = 0;
+    public static final int liftCone5 = 0;
+    public static final int clearStack = 0;
+
     public static final double liftDefaultPower = 1.0;
 
     public static final double leftArmCollect = 0.0;

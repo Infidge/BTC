@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Hardware;
 
+import android.os.strictmode.CleartextNetworkViolation;
+
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -10,6 +12,8 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import org.checkerframework.checker.units.qual.C;
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.Util.Constants;
 import org.firstinspires.ftc.teamcode.Util.LimitSwitch;
@@ -66,7 +70,14 @@ public class Lift {
         MID (Constants.liftMidJunction),
         SCORE_MID (Constants.liftScoreMidJunction),
         HIGH (Constants.liftHighJunction),
-        SCORE_HIGH (Constants.liftScoreHighJunction);
+        SCORE_HIGH (Constants.liftScoreHighJunction),
+
+        CONE1(Constants.liftCone1),
+        CONE2(Constants.liftCone2),
+        CONE3(Constants.liftCone3),
+        CONE4(Constants.liftCone4),
+        CONE5(Constants.liftCone5),
+        CLEAR_STACK(Constants.clearStack);
 
         private int liftPos;
 
@@ -338,5 +349,10 @@ public class Lift {
         if (guideReadings.distance < 3.0 /*&& yellow pole detection*/ && clawState == ClawStates.CLOSED && guideState == GuideStates.UP && liftState != Lift.LiftStates.COLLECT && liftState != Lift.LiftStates.GROUND)
             return true;
         else return false;
+    }
+
+    public void stopLift(){
+        liftLeft.setPower(0.0);
+        liftRight.setPower(0.0);
     }
 }

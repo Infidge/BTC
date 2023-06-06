@@ -18,12 +18,16 @@ public class TeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
         dt.initDrivetrain(hardwareMap);
         lift.initLift(hardwareMap);
+
         waitForStart();
+
         sensorReadTime.reset();
         liftReadTime.reset();
         switchReadTime.reset();
+
         while (opModeIsActive()) {
 
             /**Bulk Readings*/
